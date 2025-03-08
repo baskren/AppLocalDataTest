@@ -47,7 +47,9 @@ public sealed partial class MainPage : Page
             $"\n\t Query[{uri.Query}]" +
             $"\n\t MakeRelativeUri[{rootUri.MakeRelativeUri(uri)}]";
 
-
+#if __IOS__
+    Page.Padding = new Thickness(0, 50, 0, 0);
+#endif
 
         var installedLocation = Windows.ApplicationModel.Package.Current.InstalledLocation;
         /*
@@ -97,6 +99,13 @@ public sealed partial class MainPage : Page
 
 
         var localPathFragment = fontFilePath.Replace(ApplicationData.Current.LocalFolder.Path, "").Replace('\\','/').Trim('/');
+        
+        // The following works with
+        // Windows: yes
+        // Android: no
+        // iOS: no
+        // MacCatalyst: no
+        // WASM: no
         HelloTextBlock.FontFamily = new FontFamily($"ms-appdata:///local/{localPathFragment}#SixtyFour Touching");
         HelloTextBlock.Text = await EnumerateStorageFolderAsync(ApplicationData.Current.LocalFolder);
         //HelloTextBlock.Text = await EnumerateStorageFolderAsync(Windows.ApplicationModel.Package.Current.InstalledLocation);
@@ -105,6 +114,10 @@ public sealed partial class MainPage : Page
     private async void Html_Button_Click(object sender, RoutedEventArgs e)
     {
         var asm = this.GetType().Assembly;
+
+        #if __ANDROID__
+        AllowFileAccess(WebView, true);
+        #endif
 
         var cacheHtmlFolderPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "P42.Utils.Cache", asm.GetName().Name, "HTML");
         DirectoryExtensions.Assure(cacheHtmlFolderPath);
@@ -122,13 +135,58 @@ public sealed partial class MainPage : Page
         await WebView.EnsureCoreWebView2Async();
 
         var localPathFragment = htmlContentFolderPath.Replace(ApplicationData.Current.LocalFolder.Path, "").Replace('\\','/').Trim('/');
-        WebView.Source = new Uri($"ms-appdata:///local/{localPathFragment}/index.html");  // does not work!
-        // WebView.Source = new Uri($"file://{htmlContentFolderPath}/index.html");  // works!
+        // WebView.Source = new Uri($"ms-appdata:///local/{localPathFragment}/index.html");  // does not work!
+        WebView.Source = new Uri($"file://{htmlContentFolderPath}/index.html");  // works!
         //WebView.Source = new Uri("https://slashdot.org");
 
         //WebView.NavigateToString("<html><body><p>Hello world!</p></body></html>");
     }
 
+#if __ANDROID__
+    public void AllowFileAccess(WebView2 webView, bool allow)
+    {
+        if (Android.OS.Build.VERSION.SdkInt < Android.OS.BuildVersionCodes.Q)
+            return;
+
+        if (GetAndroidWebView(webView) is { } droidWebView)
+        {
+            droidWebView.Settings.AllowFileAccess = allow;
+            droidWebView.Settings.AllowFileAccessFromFileURLs = allow;
+            droidWebView.Settings.AllowUniversalAccessFromFileURLs = allow;
+        }
+        else
+            throw new Exception("Cannot find Android.Webkit.WebView for WebView2");
+    }
+
+    public void AllowNetworkLoads(WebView2 webView, bool allow)
+    {
+        if (Android.OS.Build.VERSION.SdkInt < Android.OS.BuildVersionCodes.Q)
+            return;
+
+        if (GetAndroidWebView(webView) is { } droidWebView)
+        {
+            droidWebView.Settings.AllowContentAccess = !allow;
+            droidWebView.Settings.BlockNetworkImage = !allow;
+            droidWebView.Settings.BlockNetworkLoads = !allow;
+        }
+        else
+            throw new Exception("Cannot find Android.Webkit.WebView for WebView2");
+    }
+
+    public static Android.Webkit.WebView GetAndroidWebView(FrameworkElement webView2)
+    {
+        if (webView2 is not Android.Views.ViewGroup group)
+            return null;
+
+        for (var i = 0; i < group.ChildCount; i++)
+        {
+            if (group.GetChildAt(i) is Android.Webkit.WebView droidWebView)
+                return droidWebView;
+        }
+
+        return null;
+    }
+#endif
 
 }
 

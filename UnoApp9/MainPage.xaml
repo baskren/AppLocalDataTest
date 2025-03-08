@@ -1,4 +1,5 @@
 ﻿<Page x:Class="UnoApp9.MainPage"
+      x:Name="Page"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:local="using:UnoApp9"
@@ -9,15 +10,19 @@
                 <RowDefinition Height="50" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <Button HorizontalAlignment="Left" Content="FONT RESOURCE TEST" Click="Button_Click"/>
-            <Button HorizontalAlignment="Right" Content="HTML RESOURCE TEST" Click="Html_Button_Click"/>
-            <TextBlock  Grid.Row="1"  AutomationProperties.AutomationId="HelloTextBlock" x:Name="HelloTextBlock"
-                  Text="Hello Uno Platform!"
-                  HorizontalAlignment="Center" />
-            <WebView2 Grid.Row="1" x:Name="WebView"
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+            <Button HorizontalAlignment="Center" Content="FONT RESOURCE TEST" Click="Button_Click"/>
+            <Button Grid.Column="1" HorizontalAlignment="Center" Content="HTML RESOURCE TEST" Click="Html_Button_Click"/>
+            <WebView2 Grid.Row="1" Grid.Column="1" x:Name="WebView"
                       HorizontalAlignment="Stretch"
                       VerticalAlignment="Stretch"
                   />
+            <TextBlock  Grid.Row="1"  AutomationProperties.AutomationId="HelloTextBlock" x:Name="HelloTextBlock"
+                        Text="Hello Uno Platform!"
+                        HorizontalAlignment="Left" />
         </Grid>
   </ScrollViewer>
 </Page>
